@@ -1,105 +1,341 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Olist E-commerce SQL Analytics · Lucca Cesar</title>
-<meta name="description" content="What 96,497 Brazilian e-commerce orders teach us about late deliveries, review scores, and where R$560k of revenue actually disappears." />
+<title>Olist · 96,497 orders · One quiet finding · Lucca Cesar</title>
+<meta name="description" content="What 96,497 Brazilian e-commerce orders teach us about late deliveries, the carrier bottleneck, and the R$ 560k of revenue hiding in the review-score collapse." />
+<meta name="theme-color" content="#0a0a0f" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', '"SF Mono"', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
-  :root { --bg:#faf6f1; --ink:#1a1a1a; --muted:#5b5b5b; --accent:#ff6b35; --accent-soft:#fff1ea; --line:#e8e1d8; }
-  *,*::before,*::after{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{background:var(--bg);color:var(--ink);font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
-  .wrap{max-width:760px;margin:0 auto;padding:48px 24px 96px}
-  .eyebrow{display:inline-block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:18px}
-  h1{font-family:"Iowan Old Style","Georgia",serif;font-weight:700;font-size:clamp(36px,6vw,56px);line-height:1.08;letter-spacing:-.02em;margin:0 0 24px}
-  h2{font-family:"Iowan Old Style","Georgia",serif;font-weight:700;font-size:clamp(24px,3.4vw,32px);line-height:1.2;margin:56px 0 16px;letter-spacing:-.01em}
-  h3{font-size:18px;font-weight:700;margin:32px 0 8px}
-  p{font-size:17px;color:#262626;margin:0 0 16px}
-  .lede{font-size:20px;color:var(--muted);margin-bottom:36px}
-  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0}
-  .badge{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-size:13px;color:#333}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:36px 0 12px}
-  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px}
-  .stat .num{font-family:"Iowan Old Style","Georgia",serif;font-size:34px;font-weight:700;letter-spacing:-.02em;color:var(--ink);display:block}
-  .stat .label{font-size:13px;color:var(--muted);margin-top:4px;display:block}
-  .callout{background:var(--accent-soft);border-left:4px solid var(--accent);padding:18px 22px;border-radius:8px;margin:24px 0;font-size:17px}
-  ul.tight{padding-left:1.2em;margin:0 0 16px}
-  ul.tight li{margin-bottom:6px;font-size:17px}
-  a.link{color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-weight:600}
-  hr{border:none;border-top:1px solid var(--line);margin:48px 0}
-  .cta{background:var(--ink);color:#fff;border-radius:16px;padding:32px 28px;margin-top:48px;display:flex;flex-direction:column;gap:14px}
-  .cta h2{color:#fff;margin:0;font-size:24px}
-  .cta p{color:#cfcfcf;margin:0}
-  .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-  .btn{display:inline-block;background:#fff;color:var(--ink);padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px;border:1px solid #fff}
-  .btn.ghost{background:transparent;color:#fff;border-color:#444}
-  .footer{margin-top:64px;color:var(--muted);font-size:13px;text-align:center}
-  @media (max-width: 540px){ .wrap{padding:32px 20px 80px} h1{font-size:34px} .lede{font-size:18px} }
+  :root {
+    --accent: #f97316;
+    --accent-soft: rgba(249, 115, 22, 0.10);
+  }
+  html, body { background: #0a0a0f; color: #e4e4e7; }
+  body { font-feature-settings: "ss01", "cv11"; }
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    background-position: -1px -1px;
+  }
+  .orb {
+    position: absolute; border-radius: 9999px; filter: blur(80px);
+    pointer-events: none;
+  }
+  .glass {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: all 200ms ease-out;
+  }
+  .glass:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-2px); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+    color: #e4e4e7;
+    padding: 6px 12px; border-radius: 9999px; font-size: 12.5px;
+    font-family: "JetBrains Mono", monospace; font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .pill:hover { background: rgba(255,255,255,0.08); }
+  .accent-pill {
+    background: var(--accent-soft);
+    border-color: rgba(249, 115, 22, 0.30);
+    color: #fdba74;
+  }
+  .fade-up { opacity: 0; transform: translateY(20px); transition: opacity 800ms cubic-bezier(.16,1,.3,1), transform 800ms cubic-bezier(.16,1,.3,1); }
+  .fade-up.in { opacity: 1; transform: translateY(0); }
+  .progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); z-index: 50; transition: width 60ms linear; box-shadow: 0 0 10px var(--accent); }
+  .count-up { font-variant-numeric: tabular-nums; }
+  .num-glow { text-shadow: 0 0 40px rgba(249, 115, 22, 0.4); }
+  /* Timeline */
+  .tl-seg { height: 14px; border-radius: 7px; transition: filter 260ms; }
+  .tl-seg.seller { background: #3f3f46; flex-basis: 24%; }
+  .tl-seg.carrier { background: linear-gradient(90deg, #fb923c, #f97316); flex-basis: 76%; box-shadow: 0 0 24px rgba(249, 115, 22, 0.35); }
+  .tl-label { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #71717a; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tl-day { font-family: "JetBrains Mono", monospace; font-size: 13px; color: #d4d4d8; font-weight: 500; }
+  /* Check icon */
+  .check { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 22px; height: 22px; border-radius: 9999px; background: var(--accent-soft); border: 1px solid rgba(249, 115, 22, 0.4); margin-right: 14px; margin-top: 2px; }
+  .check svg { width: 12px; height: 12px; color: #fb923c; }
+  /* Section divider */
+  .sec-eyebrow { display: inline-block; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #a1a1aa; margin-bottom: 16px; }
+  /* Selection */
+  ::selection { background: var(--accent); color: #0a0a0f; }
+  /* No-tap-highlight */
+  * { -webkit-tap-highlight-color: transparent; }
+  /* Smooth-scrolling on iOS Safari */
+  html { -webkit-overflow-scrolling: touch; }
+  @media (max-width: 768px) {
+    .orb { opacity: 0.2 !important; }
+  }
 </style>
 </head>
-<body>
-  <main class="wrap">
-    <span class="eyebrow">Project 01 · SQL + DuckDB · Kimball</span>
-    <h1>What 96,497 Brazilian orders quietly teach us about late deliveries.</h1>
-    <p class="lede">Olist runs the second-largest e-commerce marketplace in Brazil. Their public dataset is a goldmine — if you ask it the right questions. I asked ten.</p>
+<body class="font-sans antialiased min-h-screen overflow-x-hidden">
+  <div class="progress-bar" id="pb" style="width:0%"></div>
 
-    <div class="stats">
-      <div class="stat"><span class="num">96,497</span><span class="label">delivered orders</span></div>
-      <div class="stat"><span class="num">R$ 14.7 M</span><span class="label">total revenue analysed</span></div>
-      <div class="stat"><span class="num">86.8%</span><span class="label">of 8+-days-late orders got 1–2 stars</span></div>
-      <div class="stat"><span class="num">R$ 560 k</span><span class="label">revenue at risk from late + low-rated orders</span></div>
-    </div>
+  <!-- ───────────────────────────── HERO ───────────────────────────── -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 grid-bg opacity-50"></div>
+    <div class="orb" style="background: #f97316; top:-260px; left:-160px; width:600px; height:600px; opacity:0.4;"></div>
+    <div class="orb" style="background: #f97316; bottom:-200px; right:-200px; width:500px; height:500px; opacity:0.18;"></div>
+    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
-    <h2>The story in three lines</h2>
-    <p>Late deliveries don't just annoy customers — they collapse the review score from <strong>3.98 to 1.64</strong>. Once a review goes below 2 stars, the chance that customer ever comes back drops to almost zero. So I traced the lateness back to its source.</p>
-    <p>The bottleneck wasn't the seller. Sellers shipped fast (8 days median, even on late orders). The carriers held the packages for <strong>25.6 days</strong> on average before delivering — almost <strong>2x</strong> the on-time number. The fix isn't seller pressure. It's carrier accountability.</p>
-    <p>That single insight, surfaced from a 9-table SQL warehouse, redirects the entire customer-retention conversation away from "improve seller onboarding" and toward the real lever.</p>
+    <div class="relative max-w-6xl mx-auto px-6 md:px-10 pt-10 md:pt-14">
+      <nav class="flex items-center justify-between mb-16 md:mb-24">
+        <a href="https://github.com/Ucazin" class="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.02c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.31-.54-1.52.11-3.18 0 0 1.01-.32 3.3 1.23A11.5 11.5 0 0 1 12 5.8c1.02.01 2.05.14 3.01.4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.87.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.21.69.83.58A12 12 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          github.com/Ucazin
+        </a>
+        <div class="hidden md:flex items-center gap-2 text-xs text-zinc-500 font-mono uppercase tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          Live walkthrough · Project 01
+        </div>
+      </nav>
 
-    <h2>What's under the hood</h2>
-    <ul class="tight">
-      <li><strong>9 raw tables</strong> joined into a Kimball star schema (fact_orders + 5 dimensions).</li>
-      <li><strong>10 business questions</strong> answered in pure SQL — revenue concentration, state-level CLV, cohort retention, freight margin drag, seasonality.</li>
-      <li><strong>10 charts</strong> committed to the repo so reviewers can read the deck without running anything.</li>
-      <li><strong>DuckDB</strong> as the embedded warehouse — runs locally in 12 seconds, portable to Snowflake/BigQuery/Redshift unchanged.</li>
-      <li><strong>Synthetic data</strong> with deterministic seed — every chart regenerates byte-for-byte. No Kaggle download required.</li>
-    </ul>
+      <div class="max-w-5xl">
+        <span class="pill accent-pill mb-8">SQL · Kimball · DuckDB · 10 business questions</span>
+        <h1 class="font-display text-[42px] md:text-[68px] lg:text-[84px] font-bold leading-[1.02] tracking-[-0.025em]">
+          96,497 orders.<br/>
+          One quiet finding that <br class="hidden md:block"/>
+          <span style="color: var(--accent);">breaks the customer-retention story.</span>
+        </h1>
+        <p class="mt-8 text-lg md:text-xl text-zinc-400 max-w-2xl leading-relaxed">
+          Two years of Brazilian e-commerce, 9 raw tables joined into a Kimball star schema, ten business questions. The one that landed: it isn't the seller's fault.
+        </p>
 
-    <div class="callout">
-      <strong>Why this exists.</strong> The Olist dataset is the de-facto SQL benchmark for entry-level e-commerce analyst interviews in the US and Canada. This repo is my <em>show, don't tell</em> version of it — every query the interviewer might ask is already there, with the chart next to it.
-    </div>
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-12 items-end">
+          <div x-data="{shown:false, n:0, target:86.8}" x-intersect.once="shown=true;
+            (function(){
+              const start = performance.now(); const dur = 1500;
+              const step = (t)=>{
+                const p = Math.min(1, (t-start)/dur);
+                const eased = 1 - Math.pow(1-p, 4);
+                n = target * eased;
+                if (p < 1) requestAnimationFrame(step); else n = target;
+              };
+              requestAnimationFrame(step);
+            })()">
+            <div class="font-mono text-7xl md:text-9xl font-bold count-up num-glow tracking-tight" style="color: var(--accent);"
+                 x-text="n.toFixed(1) + '%'"></div>
+            <div class="mt-3 text-xs md:text-sm font-mono text-zinc-500 uppercase tracking-[0.18em] leading-relaxed max-w-xs">
+              of orders that arrived 8+ days late<br/>got rated 1 or 2 stars
+            </div>
+          </div>
+          <div class="hidden md:flex justify-end">
+            <div class="text-right">
+              <div class="font-mono text-xs text-zinc-500 uppercase tracking-wider mb-1">Dataset</div>
+              <div class="font-mono text-sm text-zinc-300">UCI / Olist · 9 tables</div>
+              <div class="font-mono text-xs text-zinc-500 mt-3 mb-1 uppercase tracking-wider">Period</div>
+              <div class="font-mono text-sm text-zinc-300">2016 – 2018</div>
+            </div>
+          </div>
+        </div>
 
-    <h2>What I learned the hard way</h2>
-    <ul class="tight">
-      <li>~3% of orders are flagged <code>canceled</code> or <code>unavailable</code> — exclude from revenue, but keep for conversion math.</li>
-      <li><code>freight_value</code> lives on the <em>item</em> table, not the order. Joining items to orders without aggregating first triples the freight totals — quietly.</li>
-      <li>Reviews can land <em>months</em> after delivery. Filter by review timestamp, not order timestamp, when you want fresh sentiment.</li>
-      <li>November 2017 has a Black Friday spike. Treat it as a normal month and your cohort retention baselines lie to you.</li>
-    </ul>
-
-    <h2>The tech</h2>
-    <div class="badges">
-      <span class="badge">SQL</span>
-      <span class="badge">DuckDB</span>
-      <span class="badge">Python</span>
-      <span class="badge">pandas</span>
-      <span class="badge">matplotlib</span>
-      <span class="badge">Kimball star schema</span>
-      <span class="badge">Power BI spec</span>
-    </div>
-
-    <section class="cta">
-      <h2>Want the full deck?</h2>
-      <p>Repo includes all 10 SQL queries, the dimensional model, every chart, and a one-page business memo with recommendations.</p>
-      <div class="cta-row">
-        <a class="btn" href="https://github.com/Ucazin/olist-ecommerce-analytics">View on GitHub</a>
-        <a class="btn ghost" href="https://www.linkedin.com/in/luccamariz/">Connect on LinkedIn</a>
+        <div class="mt-16 mb-20 flex flex-wrap gap-3">
+          <a href="https://github.com/Ucazin/olist-ecommerce-analytics" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white text-zinc-900 font-medium text-sm hover:bg-zinc-200 transition">
+            View on GitHub
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+          <a href="https://github.com/Ucazin/olist-ecommerce-analytics/blob/main/MEMO.md" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-white/15 text-zinc-300 hover:bg-white/5 hover:border-white/25 transition font-medium text-sm">
+            Read the business memo
+          </a>
+        </div>
       </div>
-    </section>
-
-    <div class="footer">
-      Built by <a class="link" href="https://github.com/Ucazin">Lucca Cesar</a> · Data Analyst · open to remote US/CA roles
     </div>
-  </main>
+  </section>
+
+  <!-- ───────────────────────────── STAT BENTO ───────────────────────────── -->
+  <section class="relative max-w-6xl mx-auto px-6 md:px-10 py-20 fade-up" data-fade>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div class="glass rounded-2xl p-6">
+        <div class="text-zinc-500 text-xs font-mono uppercase tracking-wider mb-3">Orders</div>
+        <div class="font-mono text-3xl md:text-4xl font-bold text-white">96,497</div>
+        <div class="text-zinc-400 text-sm mt-2">delivered, 2 years</div>
+      </div>
+      <div class="glass rounded-2xl p-6">
+        <div class="text-zinc-500 text-xs font-mono uppercase tracking-wider mb-3">Revenue</div>
+        <div class="font-mono text-3xl md:text-4xl font-bold text-white">R$ 14.7M</div>
+        <div class="text-zinc-400 text-sm mt-2">across 92k customers</div>
+      </div>
+      <div class="glass rounded-2xl p-6">
+        <div class="text-zinc-500 text-xs font-mono uppercase tracking-wider mb-3">Top 5 cats</div>
+        <div class="font-mono text-3xl md:text-4xl font-bold" style="color: var(--accent);">53%</div>
+        <div class="text-zinc-400 text-sm mt-2">of total revenue</div>
+      </div>
+      <div class="glass rounded-2xl p-6">
+        <div class="text-zinc-500 text-xs font-mono uppercase tracking-wider mb-3">Revenue at risk</div>
+        <div class="font-mono text-3xl md:text-4xl font-bold" style="color: var(--accent);">R$ 560k</div>
+        <div class="text-zinc-400 text-sm mt-2">late + 1-2 star orders</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── NARRATIVE ───────────────────────────── -->
+  <section class="relative max-w-3xl mx-auto px-6 md:px-10 py-16 fade-up" data-fade>
+    <span class="sec-eyebrow">The story in three lines</span>
+    <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight mb-8 leading-[1.1]">
+      Late deliveries don't just <span class="text-zinc-500">annoy</span> customers. They <span style="color: var(--accent);">collapse</span> the review.
+    </h2>
+    <div class="space-y-6 text-zinc-300 leading-relaxed text-lg">
+      <p>
+        When an order arrived 8+ days past estimate, the average review score collapsed from <span class="font-mono text-white font-medium">3.98</span> to <span class="font-mono text-white font-medium">1.64</span>. Once a review goes below 2 stars, the probability that customer ever returns drops to almost zero. So I traced the lateness back to its source.
+      </p>
+      <p>
+        The bottleneck wasn't the seller. Sellers shipped fast — an <span class="font-mono text-white font-medium">8-day</span> median, even on late orders. The carriers held the packages for <span class="font-mono text-white font-medium">25.6 days</span> on average before delivering. Almost <span style="color: var(--accent);" class="font-medium">2× the on-time number</span>.
+      </p>
+      <p>
+        That single insight, surfaced from a 9-table SQL warehouse, redirects the customer-retention conversation away from "improve seller onboarding" and toward the real lever: <span class="text-white">carrier accountability</span>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── HEADLINE INSIGHT ───────────────────────────── -->
+  <section class="relative max-w-6xl mx-auto px-6 md:px-10 py-16 fade-up" data-fade>
+    <div class="relative glass rounded-3xl p-8 md:p-14 overflow-hidden">
+      <div class="orb" style="background: #f97316; top:-100px; right:-100px; width:380px; height:380px; opacity:0.3;"></div>
+      <div class="relative">
+        <span class="sec-eyebrow" style="color: #fdba74; border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.08);">The headline insight</span>
+        <p class="font-display text-2xl md:text-4xl lg:text-5xl font-semibold leading-[1.2] max-w-4xl mt-2 text-white">
+          "The bottleneck isn't the seller. The <span style="color: var(--accent);">carrier</span> holds the package twice as long as everyone else combined."
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── TIMELINE VISUAL ───────────────────────────── -->
+  <section class="relative max-w-6xl mx-auto px-6 md:px-10 py-16 fade-up" data-fade>
+    <span class="sec-eyebrow">The lateness, broken down</span>
+    <h2 class="font-display text-3xl md:text-4xl font-bold tracking-tight mb-3">Where the days go on a late order.</h2>
+    <p class="text-zinc-400 mb-12 max-w-2xl">A typical late delivery, decomposed. The accent segment is where the time actually disappears.</p>
+
+    <div class="glass rounded-3xl p-6 md:p-10">
+      <!-- Day markers -->
+      <div class="flex items-center justify-between mb-2 text-xs">
+        <span class="tl-label">Day 0 · ordered</span>
+        <span class="tl-label">Day 8 · seller shipped</span>
+        <span class="tl-label">Day ~34 · delivered</span>
+      </div>
+      <!-- Bar -->
+      <div class="flex items-stretch gap-1.5 mb-6">
+        <div class="tl-seg seller"></div>
+        <div class="tl-seg carrier"></div>
+      </div>
+      <!-- Day numbers below -->
+      <div class="grid grid-cols-2 gap-4 md:gap-10 mt-10">
+        <div>
+          <div class="tl-label mb-2">Seller dispatch</div>
+          <div class="font-mono text-4xl md:text-5xl font-bold text-zinc-300">8 d</div>
+          <p class="text-zinc-400 text-sm mt-2 leading-relaxed max-w-xs">Median time from purchase to seller handoff. The same on late orders as on on-time orders.</p>
+        </div>
+        <div>
+          <div class="tl-label mb-2" style="color: #fb923c;">Carrier transit</div>
+          <div class="font-mono text-4xl md:text-5xl font-bold" style="color: var(--accent);">25.6 d</div>
+          <p class="text-zinc-400 text-sm mt-2 leading-relaxed max-w-xs">Median carrier hold on late orders. The on-time baseline is 13.1 days — already long, but here it's <span class="text-zinc-200 font-medium">~2×</span> worse.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── WHAT I BUILT ───────────────────────────── -->
+  <section class="relative max-w-3xl mx-auto px-6 md:px-10 py-16 fade-up" data-fade>
+    <span class="sec-eyebrow">Under the hood</span>
+    <h2 class="font-display text-3xl md:text-4xl font-bold tracking-tight mb-8">What's inside the repo.</h2>
+    <ul class="space-y-5 text-zinc-300">
+      <li class="flex items-start"><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><span class="text-white font-medium">9 raw tables</span> joined into a Kimball star schema — fact_orders + 5 conformed dimensions.</div></li>
+      <li class="flex items-start"><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><span class="text-white font-medium">10 business questions</span> answered in pure SQL — revenue concentration, state-level CLV, cohort retention, freight margin drag, seasonality.</div></li>
+      <li class="flex items-start"><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><span class="text-white font-medium">10 charts</span> committed to the repo so reviewers can read the deck without running anything.</div></li>
+      <li class="flex items-start"><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><span class="text-white font-medium">DuckDB</span> as the embedded warehouse — runs locally in 12 seconds, portable to Snowflake / BigQuery / Redshift unchanged.</div></li>
+      <li class="flex items-start"><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><span class="text-white font-medium">Synthetic data</span> with deterministic seed — every chart regenerates byte-for-byte. No Kaggle download required.</div></li>
+    </ul>
+  </section>
+
+  <!-- ───────────────────────────── QUIRKS ───────────────────────────── -->
+  <section class="relative max-w-3xl mx-auto px-6 md:px-10 py-16 fade-up" data-fade>
+    <span class="sec-eyebrow">The Olist quirks worth knowing</span>
+    <h2 class="font-display text-3xl md:text-4xl font-bold tracking-tight mb-8">What I learned the hard way.</h2>
+    <div class="space-y-5 text-zinc-300 leading-relaxed text-[17px]">
+      <p>~<span class="font-mono text-white">3%</span> of orders are flagged <code class="font-mono text-xs px-1.5 py-0.5 bg-white/5 rounded text-zinc-300">canceled</code> — exclude from revenue, keep for conversion math.</p>
+      <p><code class="font-mono text-xs px-1.5 py-0.5 bg-white/5 rounded text-zinc-300">freight_value</code> lives on the <em class="text-white not-italic">item</em> table, not the order. Easy to triple-count if you <code class="font-mono text-xs px-1.5 py-0.5 bg-white/5 rounded text-zinc-300">SUM</code> after joining items to orders without aggregating first.</p>
+      <p>Reviews can arrive <em class="text-white not-italic">months</em> after delivery. Filter by review timestamp, not order timestamp, when measuring fresh sentiment.</p>
+      <p>November 2017 is a strong <em class="text-white not-italic">Black Friday</em> peak. Treat it as a normal month and your cohort retention baselines lie to you.</p>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── TECH ───────────────────────────── -->
+  <section class="relative max-w-6xl mx-auto px-6 md:px-10 py-16 fade-up" data-fade>
+    <span class="sec-eyebrow">The stack</span>
+    <h2 class="font-display text-3xl md:text-4xl font-bold tracking-tight mb-8">Built with.</h2>
+    <div class="flex flex-wrap gap-2.5">
+      <span class="pill">SQL</span>
+      <span class="pill">DuckDB</span>
+      <span class="pill">Python 3.12</span>
+      <span class="pill">pandas</span>
+      <span class="pill">matplotlib</span>
+      <span class="pill">seaborn</span>
+      <span class="pill">Kimball star schema</span>
+      <span class="pill">Power BI spec</span>
+    </div>
+  </section>
+
+  <!-- ───────────────────────────── CTA FOOTER ───────────────────────────── -->
+  <footer class="relative border-t border-white/5 mt-12 overflow-hidden">
+    <div class="orb" style="background: #f97316; bottom:-180px; left:50%; transform:translateX(-50%); width:600px; height:280px; opacity:0.10;"></div>
+    <div class="relative max-w-6xl mx-auto px-6 md:px-10 py-20">
+      <span class="sec-eyebrow">Hire</span>
+      <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3 max-w-3xl leading-[1.1]">
+        Open to remote <span style="color: var(--accent);">Data Analyst</span> roles in the US &amp; Canada.
+      </h2>
+      <p class="text-zinc-400 max-w-2xl mb-10 text-lg">
+        Six more projects in the same portfolio: SaaS MRR & churn cohorts · A/B testing with CUPED · dbt warehouse · NYC 311 dashboard · RFM segmentation · BigQuery+Airflow.
+      </p>
+      <div class="flex flex-wrap gap-3 mb-12">
+        <a href="https://github.com/Ucazin/olist-ecommerce-analytics" class="pill">↗ This repo</a>
+        <a href="https://github.com/Ucazin" class="pill">↗ All projects</a>
+        <a href="https://www.linkedin.com/in/luccamariz" class="pill">↗ LinkedIn</a>
+        <a href="mailto:luccamariz01@gmail.com" class="pill">↗ luccamariz01@gmail.com</a>
+      </div>
+      <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div class="text-xs text-zinc-500 font-mono">© 2026 Lucca Cesar · Brasília · Built with HTML + Tailwind + Alpine</div>
+        <div class="text-xs text-zinc-600 font-mono">v2 · 2026-05-22</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const pb = document.getElementById('pb');
+    document.addEventListener('scroll', () => {
+      const h = document.documentElement;
+      const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+      pb.style.width = pct + '%';
+    }, { passive: true });
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('[data-fade]').forEach(el => io.observe(el));
+  </script>
 </body>
 </html>
