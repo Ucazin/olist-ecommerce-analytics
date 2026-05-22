@@ -1,5 +1,7 @@
 # Olist E-commerce SQL Analytics
 
+> 🌐 **Live walkthrough:** https://ucazin.github.io/olist-ecommerce-analytics/
+
 End-to-end SQL analytics on an Olist-shaped Brazilian e-commerce dataset — **96,497 delivered orders**, 92,315 unique customers, R$ 14.7M in revenue, joined across 9 raw tables (orders, items, products, customers, sellers, reviews, payments, geolocation, category translations).
 
 This is the SQL anchor of the portfolio: a Kimball-style dimensional model, ten business-question queries, and a chart deck built on top.
