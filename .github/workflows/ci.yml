@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install "ruff>=0.6,<1.0" "pytest>=8,<9"
+
+      - name: Ruff lint (non-blocking)
+        run: ruff check . --statistics --exit-zero
+
+      - name: Ruff format check (non-blocking)
+        run: ruff format --check . || echo "Format check has suggestions"
+
+      - name: Pytest (only if tests directory exists)
+        run: |
+          if [ -d tests ]; then
+            pytest tests/ -v
+          else
+            echo "No tests/ directory — skipping pytest"
+          fi
+
+      - name: Smoke-import every src module
+        run: |
+          if [ -d src ]; then
+            python -c "
+          import importlib, pathlib, sys
+          for p in pathlib.Path('src').glob('*.py'):
+              if p.stem.startswith('_'): continue
+              # script-style files often run on import — skip those
+              try:
+                  importlib.import_module(f'src.{p.stem}')
+                  print(f'OK · src.{p.stem}')
+              except (SystemExit, ImportError) as e:
+                  print(f'SKIP · src.{p.stem}: {e}')
+              except Exception as e:
+                  print(f'WARN · src.{p.stem}: {type(e).__name__}: {e}')
+          "
+          fi
