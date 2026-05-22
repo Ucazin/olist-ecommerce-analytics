@@ -1,5 +1,21 @@
 # Olist E-commerce SQL Analytics
 
+
+## Architecture
+
+```mermaid
+flowchart LR
+    GEN["src/generate_synthetic_olist.py<br/>(deterministic, seed 42)"] --> RAW["9 CSVs<br/>(orders, items, products,<br/>customers, sellers, reviews,<br/>payments, geolocation,<br/>category translations)"]
+    RAW --> LOAD["sql/01_load_raw.sql<br/>→ DuckDB raw.*"]
+    LOAD --> MODEL["sql/02_dim_model.sql<br/>→ fact_orders + 5 dims"]
+    MODEL --> QS["sql/03_business_questions.sql<br/>10 analytical queries"]
+    MODEL --> WIN["sql/04_window_functions.sql<br/>5 window-function showcases"]
+    QS --> ANS["outputs/business_answers.md"]
+    QS --> CHARTS["notebooks/eda.py<br/>→ 10 PNG charts"]
+    MODEL --> STATS["src/validate_late_delivery_significance.py<br/>Welch t-test + Cohen's d + bootstrap CI"]
+    STATS --> SVAL["outputs/statistical_validation.md"]
+```
+
 > 🌐 **Live walkthrough:** https://ucazin.github.io/olist-ecommerce-analytics/
 
 End-to-end SQL analytics on an Olist-shaped Brazilian e-commerce dataset — **96,497 delivered orders**, 92,315 unique customers, R$ 14.7M in revenue, joined across 9 raw tables (orders, items, products, customers, sellers, reviews, payments, geolocation, category translations).
