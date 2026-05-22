@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Olist E-commerce SQL Analytics · Lucca Cesar</title>
+<meta name="description" content="What 96,497 Brazilian e-commerce orders teach us about late deliveries, review scores, and where R$560k of revenue actually disappears." />
+<style>
+  :root { --bg:#faf6f1; --ink:#1a1a1a; --muted:#5b5b5b; --accent:#ff6b35; --accent-soft:#fff1ea; --line:#e8e1d8; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 24px 96px}
+  .eyebrow{display:inline-block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:18px}
+  h1{font-family:"Iowan Old Style","Georgia",serif;font-weight:700;font-size:clamp(36px,6vw,56px);line-height:1.08;letter-spacing:-.02em;margin:0 0 24px}
+  h2{font-family:"Iowan Old Style","Georgia",serif;font-weight:700;font-size:clamp(24px,3.4vw,32px);line-height:1.2;margin:56px 0 16px;letter-spacing:-.01em}
+  h3{font-size:18px;font-weight:700;margin:32px 0 8px}
+  p{font-size:17px;color:#262626;margin:0 0 16px}
+  .lede{font-size:20px;color:var(--muted);margin-bottom:36px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 0}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-size:13px;color:#333}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:36px 0 12px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .stat .num{font-family:"Iowan Old Style","Georgia",serif;font-size:34px;font-weight:700;letter-spacing:-.02em;color:var(--ink);display:block}
+  .stat .label{font-size:13px;color:var(--muted);margin-top:4px;display:block}
+  .callout{background:var(--accent-soft);border-left:4px solid var(--accent);padding:18px 22px;border-radius:8px;margin:24px 0;font-size:17px}
+  ul.tight{padding-left:1.2em;margin:0 0 16px}
+  ul.tight li{margin-bottom:6px;font-size:17px}
+  a.link{color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-weight:600}
+  hr{border:none;border-top:1px solid var(--line);margin:48px 0}
+  .cta{background:var(--ink);color:#fff;border-radius:16px;padding:32px 28px;margin-top:48px;display:flex;flex-direction:column;gap:14px}
+  .cta h2{color:#fff;margin:0;font-size:24px}
+  .cta p{color:#cfcfcf;margin:0}
+  .cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .btn{display:inline-block;background:#fff;color:var(--ink);padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:600;font-size:14px;border:1px solid #fff}
+  .btn.ghost{background:transparent;color:#fff;border-color:#444}
+  .footer{margin-top:64px;color:var(--muted);font-size:13px;text-align:center}
+  @media (max-width: 540px){ .wrap{padding:32px 20px 80px} h1{font-size:34px} .lede{font-size:18px} }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <span class="eyebrow">Project 01 · SQL + DuckDB · Kimball</span>
+    <h1>What 96,497 Brazilian orders quietly teach us about late deliveries.</h1>
+    <p class="lede">Olist runs the second-largest e-commerce marketplace in Brazil. Their public dataset is a goldmine — if you ask it the right questions. I asked ten.</p>
+
+    <div class="stats">
+      <div class="stat"><span class="num">96,497</span><span class="label">delivered orders</span></div>
+      <div class="stat"><span class="num">R$ 14.7 M</span><span class="label">total revenue analysed</span></div>
+      <div class="stat"><span class="num">86.8%</span><span class="label">of 8+-days-late orders got 1–2 stars</span></div>
+      <div class="stat"><span class="num">R$ 560 k</span><span class="label">revenue at risk from late + low-rated orders</span></div>
+    </div>
+
+    <h2>The story in three lines</h2>
+    <p>Late deliveries don't just annoy customers — they collapse the review score from <strong>3.98 to 1.64</strong>. Once a review goes below 2 stars, the chance that customer ever comes back drops to almost zero. So I traced the lateness back to its source.</p>
+    <p>The bottleneck wasn't the seller. Sellers shipped fast (8 days median, even on late orders). The carriers held the packages for <strong>25.6 days</strong> on average before delivering — almost <strong>2x</strong> the on-time number. The fix isn't seller pressure. It's carrier accountability.</p>
+    <p>That single insight, surfaced from a 9-table SQL warehouse, redirects the entire customer-retention conversation away from "improve seller onboarding" and toward the real lever.</p>
+
+    <h2>What's under the hood</h2>
+    <ul class="tight">
+      <li><strong>9 raw tables</strong> joined into a Kimball star schema (fact_orders + 5 dimensions).</li>
+      <li><strong>10 business questions</strong> answered in pure SQL — revenue concentration, state-level CLV, cohort retention, freight margin drag, seasonality.</li>
+      <li><strong>10 charts</strong> committed to the repo so reviewers can read the deck without running anything.</li>
+      <li><strong>DuckDB</strong> as the embedded warehouse — runs locally in 12 seconds, portable to Snowflake/BigQuery/Redshift unchanged.</li>
+      <li><strong>Synthetic data</strong> with deterministic seed — every chart regenerates byte-for-byte. No Kaggle download required.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Why this exists.</strong> The Olist dataset is the de-facto SQL benchmark for entry-level e-commerce analyst interviews in the US and Canada. This repo is my <em>show, don't tell</em> version of it — every query the interviewer might ask is already there, with the chart next to it.
+    </div>
+
+    <h2>What I learned the hard way</h2>
+    <ul class="tight">
+      <li>~3% of orders are flagged <code>canceled</code> or <code>unavailable</code> — exclude from revenue, but keep for conversion math.</li>
+      <li><code>freight_value</code> lives on the <em>item</em> table, not the order. Joining items to orders without aggregating first triples the freight totals — quietly.</li>
+      <li>Reviews can land <em>months</em> after delivery. Filter by review timestamp, not order timestamp, when you want fresh sentiment.</li>
+      <li>November 2017 has a Black Friday spike. Treat it as a normal month and your cohort retention baselines lie to you.</li>
+    </ul>
+
+    <h2>The tech</h2>
+    <div class="badges">
+      <span class="badge">SQL</span>
+      <span class="badge">DuckDB</span>
+      <span class="badge">Python</span>
+      <span class="badge">pandas</span>
+      <span class="badge">matplotlib</span>
+      <span class="badge">Kimball star schema</span>
+      <span class="badge">Power BI spec</span>
+    </div>
+
+    <section class="cta">
+      <h2>Want the full deck?</h2>
+      <p>Repo includes all 10 SQL queries, the dimensional model, every chart, and a one-page business memo with recommendations.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://github.com/Ucazin/olist-ecommerce-analytics">View on GitHub</a>
+        <a class="btn ghost" href="https://www.linkedin.com/in/luccamariz/">Connect on LinkedIn</a>
+      </div>
+    </section>
+
+    <div class="footer">
+      Built by <a class="link" href="https://github.com/Ucazin">Lucca Cesar</a> · Data Analyst · open to remote US/CA roles
+    </div>
+  </main>
+</body>
+</html>
